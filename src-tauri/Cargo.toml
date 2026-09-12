@@ -1,0 +1,56 @@
+[package]
+name = "faqih-ai"
+version = "0.1.0"
+description = "Faqih AI by MOND — offline Uzbekistan legal assistant"
+authors = ["MOND"]
+edition = "2021"
+
+[lib]
+name = "faqih_ai_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dirs = "6"
+num_cpus = "1"
+parking_lot = "0.12"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde", "clock"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+pdf-extract = "0.8"
+zip = "2"
+regex = "1"
+encoding_rs = "0.8"
+
+# AI / retrieval — pins verified at project setup (2026-09-09)
+llama-cpp-2 = "0.1.156"
+ort = "2.0.0-rc.13"
+tokenizers = "0.21"
+ndarray = "0.16"
+lancedb = { version = "0.38", default-features = false, features = ["remote"] }
+arrow-array = "58"
+futures = "0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "fs", "io-util"] }
+sysinfo = "0.35"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+futures-util = "0.3"
+
+# Release profile: max runtime performance / smaller binary for shipping.
+# Tradeoff: link times jump from seconds to many minutes (LTO + single codegen unit).
+# Prefer `cargo check` / `tauri dev` (debug) for day-to-day work; use release only for
+# packaging (`npm run tauri build`) or performance validation.
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

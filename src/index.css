@@ -1,0 +1,290 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Claude warm light */
+    --surface-base: #f5f2eb;
+    --surface-panel: #faf8f4;
+    --surface-elevated: #ffffff;
+    --surface-muted: #ebe6dc;
+    --surface-border: #e0d9cc;
+    --surface-ink: #2c2a26;
+    --surface-soft: #5c574e;
+    --surface-faint: #8a8478;
+
+    /* Liquid Glass — light */
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-bg-strong: rgba(255, 255, 255, 0.72);
+    --glass-accent: rgba(201, 100, 66, 0.42);
+    --glass-border: rgba(255, 255, 255, 0.28);
+    --glass-highlight: rgba(255, 255, 255, 0.72);
+    --glass-fallback: rgba(255, 255, 255, 0.88);
+    --glass-fallback-accent: rgba(201, 100, 66, 0.88);
+    --glass-dim: rgba(44, 42, 38, 0.28);
+    --glass-text-on-accent: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      /* Warm charcoal — not pure black */
+      --surface-base: #2a2723;
+      --surface-panel: #322e29;
+      --surface-elevated: #3a3530;
+      --surface-muted: #3f3a34;
+      --surface-border: #4a443c;
+      --surface-ink: #f3efe6;
+      --surface-soft: #c9c2b5;
+      --surface-faint: #9a9286;
+
+      --glass-bg: rgba(255, 255, 255, 0.08);
+      --glass-bg-strong: rgba(255, 255, 255, 0.14);
+      --glass-accent: rgba(201, 100, 66, 0.48);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-highlight: rgba(255, 255, 255, 0.28);
+      --glass-fallback: rgba(58, 53, 48, 0.92);
+      --glass-fallback-accent: rgba(170, 80, 50, 0.92);
+      --glass-dim: rgba(0, 0, 0, 0.45);
+      --glass-text-on-accent: #fff7f2;
+    }
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--surface-base);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(201, 100, 66, 0.07), transparent),
+      radial-gradient(ellipse 60% 40% at 90% 10%, rgba(255, 255, 255, 0.45), transparent);
+    color: var(--surface-ink);
+    font-family: theme("fontFamily.sans");
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-image:
+        radial-gradient(ellipse 80% 50% at 15% -10%, rgba(201, 100, 66, 0.12), transparent),
+        radial-gradient(ellipse 50% 40% at 100% 0%, rgba(255, 255, 255, 0.04), transparent);
+    }
+  }
+
+  ::selection {
+    background: rgba(201, 100, 66, 0.22);
+  }
+}
+
+@layer components {
+  /* ——— Liquid Glass primitives ——— */
+  .glass {
+    position: relative;
+    isolation: isolate;
+    border-radius: theme("borderRadius.glass");
+    background-color: var(--glass-fallback);
+    border: 1px solid var(--glass-border);
+    box-shadow: theme("boxShadow.glass");
+    transition:
+      transform 240ms theme("transitionTimingFunction.press"),
+      background-color 240ms theme("transitionTimingFunction.glass"),
+      box-shadow 240ms theme("transitionTimingFunction.glass"),
+      border-color 240ms theme("transitionTimingFunction.glass"),
+      filter 240ms theme("transitionTimingFunction.glass");
+  }
+
+  .glass::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border-top: 1px solid var(--glass-highlight);
+    opacity: 0.9;
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+    .glass {
+      background-color: var(--glass-bg);
+      -webkit-backdrop-filter: blur(20px) saturate(1.3);
+      backdrop-filter: blur(20px) saturate(1.3);
+    }
+  }
+
+  .glass-strong {
+    position: relative;
+    isolation: isolate;
+    border-radius: theme("borderRadius.panel");
+    background-color: var(--glass-fallback);
+    border: 1px solid var(--glass-border);
+    box-shadow: theme("boxShadow.glass");
+    transition:
+      transform 240ms theme("transitionTimingFunction.press"),
+      background-color 240ms theme("transitionTimingFunction.glass"),
+      box-shadow 240ms theme("transitionTimingFunction.glass"),
+      border-color 240ms theme("transitionTimingFunction.glass"),
+      filter 240ms theme("transitionTimingFunction.glass");
+  }
+
+  .glass-strong::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border-top: 1px solid var(--glass-highlight);
+    opacity: 0.9;
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+    .glass-strong {
+      background-color: var(--glass-bg-strong);
+      -webkit-backdrop-filter: blur(28px) saturate(1.35);
+      backdrop-filter: blur(28px) saturate(1.35);
+    }
+  }
+
+  .glass-primary {
+    position: relative;
+    isolation: isolate;
+    border-radius: theme("borderRadius.glass");
+    background-color: var(--glass-fallback-accent);
+    color: var(--glass-text-on-accent);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: theme("boxShadow.glass");
+    transition:
+      transform 240ms theme("transitionTimingFunction.press"),
+      background-color 240ms theme("transitionTimingFunction.glass"),
+      filter 240ms theme("transitionTimingFunction.glass"),
+      box-shadow 240ms theme("transitionTimingFunction.glass");
+  }
+
+  .glass-primary::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border-top: 1px solid rgba(255, 255, 255, 0.45);
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+    .glass-primary {
+      background-color: var(--glass-accent);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      backdrop-filter: blur(18px) saturate(1.4);
+    }
+  }
+
+  .glass-interactive:hover {
+    filter: brightness(1.04);
+  }
+
+  .glass-interactive:active {
+    transform: scale(0.98);
+    filter: brightness(0.97);
+  }
+
+  .glass-interactive:disabled,
+  .glass-interactive[aria-disabled="true"] {
+    opacity: 0.45;
+    transform: none;
+    filter: none;
+    cursor: not-allowed;
+  }
+
+  .glass-dim {
+    background-color: var(--glass-dim);
+  }
+
+  @supports ((-webkit-backdrop-filter: blur(12px)) or (backdrop-filter: blur(12px))) {
+    .glass-dim {
+      -webkit-backdrop-filter: blur(12px) saturate(1.1);
+      backdrop-filter: blur(12px) saturate(1.1);
+    }
+  }
+
+  /* Quiet content card — Claude calm, not glass */
+  .panel-card {
+    border-radius: theme("borderRadius.panel");
+    border: 1px solid var(--surface-border);
+    background-color: var(--surface-panel);
+    padding: 1.5rem;
+  }
+
+  .wordmark {
+    font-family: theme("fontFamily.serif");
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+
+  .prose-faqih {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--surface-ink);
+  }
+
+  .prose-faqih p {
+    margin-bottom: 0.75rem;
+  }
+
+  .prose-faqih p:last-child {
+    margin-bottom: 0;
+  }
+
+  .prose-faqih ul {
+    margin-bottom: 0.75rem;
+    list-style-type: disc;
+    padding-left: 1.25rem;
+  }
+
+  .prose-faqih ul > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.25rem;
+  }
+
+  .prose-faqih ol {
+    margin-bottom: 0.75rem;
+    list-style-type: decimal;
+    padding-left: 1.25rem;
+  }
+
+  .prose-faqih ol > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.25rem;
+  }
+
+  .prose-faqih strong {
+    font-weight: 600;
+    color: var(--surface-ink);
+  }
+
+  .prose-faqih a {
+    color: theme("colors.accent.DEFAULT");
+    text-underline-offset: 2px;
+  }
+
+  .prose-faqih a:hover {
+    text-decoration-line: underline;
+  }
+
+  .prose-faqih code {
+    border-radius: 0.25rem;
+    border: 1px solid var(--surface-border);
+    background-color: var(--surface-muted);
+    padding: 0.125rem 0.25rem;
+    font-size: 0.85em;
+    color: var(--surface-soft);
+  }
+
+  .prose-faqih pre {
+    margin-bottom: 0.75rem;
+    overflow-x: auto;
+    border-radius: theme("borderRadius.card");
+    border: 1px solid var(--surface-border);
+    background-color: var(--surface-muted);
+    padding: 0.75rem;
+  }
+}

@@ -1,0 +1,62 @@
+# Faqih AI by MOND — Cursor rules
+
+Offline desktop legal assistant for Uzbekistan legislation.
+Stack: **Tauri v2** + **React 18 / TypeScript (strict)** + **Rust**. Product name: **Faqih AI**. Identifier: `com.mond.faqihai`. Brand: **Faqih AI by MOND**.
+
+## Non-negotiable architecture
+
+- Desktop shell: Tauri v2. All AI/native logic lives in `src-tauri/` (Rust).
+- Frontend: React 18 + TypeScript (strict), Vite, Tailwind CSS, Lucide icons, Framer Motion.
+- Frontend **NEVER** calls AI directly — always `invoke()` via the single typed wrapper `src/lib/api.ts`.
+- AI inference: `llama-cpp-2` (pin latest compatible at setup; currently targeting **0.1.156**) running a **user-provided** quantized GGUF (Qwen2.5-1.5B or 3B-Instruct). No bundled LLM — first-run picker; path in JSON under Tauri app data dir.
+- Embeddings: ONNX Runtime (`ort`) + `multilingual-e5-small` from `resources/models/multilingual-e5-small.onnx` (bundled).
+- Tokenization: `tokenizers` crate + real `resources/models/tokenizer.json`. **NEVER** invent a custom/fake tokenizer.
+- Vector storage: LanceDB, file-based, **read-only** at runtime from `resources/lexuz.db` (built by `scripts/ingestion/`, not by the app).
+- **100% OFFLINE runtime.** No cloud AI providers, no "cloud mode," no external LLM API keys — ever. Reject Gemini / Groq / OpenAI / Anthropic / etc. for the running app regardless of framing.
+
+## Critical known-bug preventions (apply from day one)
+
+1. **ONNX inputs:** pass `input_ids`, `attention_mask`, **and** `token_type_ids` (all-zeros, same shape). Omitting `token_type_ids` → "Missing Input".
+2. **Real tokenizer + e5 prefixes:** `tokenizers` + `tokenizer.json`. Use `"passage: "` for documents and `"query: "` for search queries.
+3. **Context size:** `llama-cpp-2` `.with_n_ctx()` takes `Option<NonZeroU32>` — always `Some(...)`.
+4. **Logit index:** sample with `batch.n_tokens() - 1`, never a hardcoded index (or generation exits with empty output).
+5. **Decode:** use `token_to_piece`, not deprecated `token_to_bytes`.
+6. **Streaming callback:** `F: FnMut(&str) + Send + 'static`. Final answer accumulator **must** be shared (`Arc<Mutex<String>>`) readable by both the callback and the outer function — a closure-only local yields an empty final string despite UI streaming.
+7. **Repetition control:** `penalty_repeat` ≈ 1.1–1.15 (not higher); `penalty_last_n` ≈ 64–256. Safety net: stop if a **40+** char substring repeats 2–3 times consecutively (20-char thresholds false-positive on legal terms).
+8. **Chat template:** Qwen2.5-Instruct expects ChatML:
+   `<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{user}<|im_end|>\n<|im_start|>assistant\n`
+   Prefer reading the template from GGUF metadata via llama-cpp-2 when available; **log which template is used at startup**. Wrong template → incoherent / corrupted-looking output.
+
+## Frontend / design system
+
+- **Layout (Claude calm):** warm cream `#f5f2eb` / dark warm charcoal (CSS vars); generous whitespace; thin 1px borders — not heavy shadows. Quiet text sidebar (Suhbat, Hujjat tahlili, Sozlamalar).
+- **Interactive (Liquid Glass):** primary buttons, send/input chrome, status pill, modals, emphasized chips use `.glass` / `.glass-primary` / `.glass-strong` + `.glass-interactive` from `src/index.css` (tokens in `tailwind.config.js`). `backdrop-filter: blur + saturate(1.3)` with solid `--glass-fallback*` when blur unsupported (WebKitGTK).
+- Accent terracotta `#c96442` as tinted glass on primary CTAs only — no flat solid fills for primary controls; ghost/text for secondary.
+- Typography: Source Serif 4 wordmark + Source Sans 3 body. Hierarchy via size/weight.
+- First-run: onboarding → model download → app. Shared primitives in `src/components/shared/`.
+- Keep UI in `src/components/{layout,chat,document-analysis,shared}`, pages in `src/pages/`, state in `src/store/`.
+
+## Directory expectations
+
+```
+src/                    # React frontend
+src-tauri/src/{commands,ai,db,models}
+src-tauri/resources/{models,lexuz.db}
+scripts/ingestion/      # offline DB build only (Labor + Civil MVP)
+```
+
+## Ingestion pipeline (`scripts/ingestion/`)
+
+- Manual batch only — never call from the Tauri runtime.
+- URLs live in `scrape_targets.yaml` (re-verify before scrape).
+- Respect lex.uz `robots.txt` Crawl-delay (currently 20s; BOM-safe parser required).
+- Change detection via `raw_data/.snapshot_manifest.json` — archive + CHANGELOG on change.
+- Embed with `passage: ` / query with `query: `; CPU torch install **before** `requirements.txt`.
+- MVP codes only: Mehnat kodeksi + Fuqarolik kodeksi (Civil spans two lex.uz pages).
+
+## Implementation discipline
+
+- Prove IPC with `hello_world` before adding heavy AI crates to the default build.
+- Do not add cloud SDKs, API-key settings, or "optional online" modes to the runtime app.
+- Prefer stubs with documented known-bug comments over half-wired AI that regresses the eight fixes above.
+- When enabling `llama-cpp-2` / `ort` / `lancedb` / `tokenizers`, re-verify crate versions and keep pins explicit in `src-tauri/Cargo.toml`.

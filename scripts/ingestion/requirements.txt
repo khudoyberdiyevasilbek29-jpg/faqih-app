@@ -1,0 +1,28 @@
+# Faqih AI — offline ingestion pipeline (NOT used by the desktop runtime)
+#
+###############################################################################
+# CRITICAL — CPU-only PyTorch (install FIRST, before this file)
+###############################################################################
+#
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements.txt
+#
+# Installing sentence-transformers without a prior CPU torch wheel often pulls
+# multi-GB CUDA / GPU stacks this project does not need.
+#
+###############################################################################
+
+requests>=2.32.0,<3
+beautifulsoup4>=4.12.0,<5
+lxml>=5.0.0,<7
+PyYAML>=6.0.0,<7
+
+# Embeddings (expects CPU torch already installed — see banner above)
+sentence-transformers>=3.0.0,<6
+
+# Vector store — MUST stay in sync with src-tauri/Cargo.toml `lancedb`
+# (see README "LanceDB version coupling"). Installed pipeline used 0.38.0;
+# Rust is still on 0.21.x and cannot read indexes written by 0.38.
+lancedb==0.38.0
+pyarrow>=15.0.0,<23
+numpy>=1.26.0,<3

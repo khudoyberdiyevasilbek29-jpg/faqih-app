@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Local / large AI artifacts (never commit weights)
+*.gguf
+*.onnx
+src-tauri/resources/models/tokenizer.json
+
+# Ingestion pipeline local artifacts
+scripts/ingestion/.venv/
+scripts/ingestion/raw_data/*.html
+scripts/ingestion/raw_data/*.meta.json
+scripts/ingestion/cleaned/*.json
+scripts/ingestion/chunks/*.json
+scripts/ingestion/archive/**
+!scripts/ingestion/archive/.gitkeep
+# LanceDB directory produced by store.py (regenerate via pipeline)
+src-tauri/resources/lexuz.db/**
+!src-tauri/resources/lexuz.db/.gitkeep
+# Local build tooling
+src-tauri/.tools/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

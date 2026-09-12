@@ -1,0 +1,6 @@
+# LanceDB needs `protoc` at build time.
+# Do NOT point PROTOC at a path under this repo — the directory name
+# "Faqih AI" contains a space and prost-build fails with NotFound.
+# `scripts/with-protoc.sh` (used by npm run tauri:dev) and ~/.local/bin/protoc
+# provide a space-free PROTOC. Optional user override:
+#   ~/.cargo/config.toml → [env] PROTOC = { value = "/home/YOU/.local/bin/protoc", force = true }

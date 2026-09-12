@@ -1,0 +1,35 @@
+# MVP scrape targets — Labor Code + Civil Code only.
+# Re-verify URLs on lex.uz before each run; document IDs / paths change over time.
+#
+# Civil Code is published as two lex.uz pages (1-qism + 2-qism) but counts as ONE
+# code for MVP scope. Do not add Tax Code or other codes here yet.
+
+user_agent: "FaqihAI-Ingestion/0.1 (+offline Uzbekistan legal corpus; manual batch job; not runtime app)"
+
+# Floor delay between requests. robots.txt Crawl-delay (lex.uz currently 20s) wins if higher.
+request_delay_seconds: 3
+max_retries: 3
+retry_backoff_seconds: 5
+timeout_seconds: 120
+
+targets:
+  - id: labor_code
+    law_name: "Mehnat kodeksi"
+    title: "Oʻzbekiston Respublikasining Mehnat kodeksi"
+    language: uz
+    # Verified 2026-09-09
+    url: "https://lex.uz/uz/docs/-6257288"
+
+  - id: civil_code_part1
+    law_name: "Fuqarolik kodeksi"
+    title: "Oʻzbekiston Respublikasining Fuqarolik kodeksi (birinchi qism)"
+    language: uz
+    # Verified 2026-09-09
+    url: "https://lex.uz/uz/docs/-111189"
+
+  - id: civil_code_part2
+    law_name: "Fuqarolik kodeksi"
+    title: "Oʻzbekiston Respublikasining Fuqarolik kodeksi (ikkinchi qism)"
+    language: uz
+    # Verified 2026-09-09 — second part of the same Civil Code
+    url: "https://lex.uz/uz/docs/-180552"

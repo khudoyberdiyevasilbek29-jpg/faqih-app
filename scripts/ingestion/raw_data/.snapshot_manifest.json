@@ -1,0 +1,32 @@
+{
+  "documents": {
+    "labor_code": {
+      "law_name": "Mehnat kodeksi",
+      "title": "Oʻzbekiston Respublikasining Mehnat kodeksi",
+      "url": "https://lex.uz/uz/docs/-6257288",
+      "content_hash": "21dba259ffaaa17add66e5a6351c082d3ec035f068d356e2c238f47072b27ca5",
+      "fetched_at": "2026-09-10T11:08:58.743955+00:00",
+      "raw_file": "labor_code.html",
+      "bytes": 3291027
+    },
+    "civil_code_part1": {
+      "law_name": "Fuqarolik kodeksi",
+      "title": "Oʻzbekiston Respublikasining Fuqarolik kodeksi (birinchi qism)",
+      "url": "https://lex.uz/uz/docs/-111189",
+      "content_hash": "8d2c353edfa8c2c01508104a069006cec4515babf5ffce34a6df7e089c96d66a",
+      "fetched_at": "2026-09-10T11:09:02.019229+00:00",
+      "raw_file": "civil_code_part1.html",
+      "bytes": 1989847
+    },
+    "civil_code_part2": {
+      "law_name": "Fuqarolik kodeksi",
+      "title": "Oʻzbekiston Respublikasining Fuqarolik kodeksi (ikkinchi qism)",
+      "url": "https://lex.uz/uz/docs/-180552",
+      "content_hash": "39589a65d6ce932fc7aeda74b3169b8f096bde1823b307a0b95648b6c23701be",
+      "fetched_at": "2026-09-10T11:09:05.439107+00:00",
+      "raw_file": "civil_code_part2.html",
+      "bytes": 3147505
+    }
+  },
+  "updated_at": "2026-09-10T11:09:05.439107+00:00"
+}
