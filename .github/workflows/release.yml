@@ -55,9 +55,9 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MACOSX_DEPLOYMENT_TARGET: '12.0'
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Faqih AI ${{ github.ref_name }}'
           releaseDraft: false
           prerelease: false
-          
