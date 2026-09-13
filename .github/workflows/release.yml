@@ -40,9 +40,14 @@ jobs:
         run: |
           mkdir -p src-tauri/.tools/protoc/bin
           PROTOC_PATH="$(command -v protoc)"
+          PROTOC_DIR="$(dirname "$(dirname "$PROTOC_PATH")")"
           cp "$PROTOC_PATH" src-tauri/.tools/protoc/bin/protoc
           chmod +x src-tauri/.tools/protoc/bin/protoc
-
+          if [ -d "$PROTOC_DIR/include" ]; then
+            mkdir -p src-tauri/.tools/protoc/include
+            cp -r "$PROTOC_DIR/include/." src-tauri/.tools/protoc/include/
+          fi
+          echo "PROTOC_INCLUDE=$(pwd)/src-tauri/.tools/protoc/include" >> "$GITHUB_ENV"
       - name: Install dependencies
         run: npm install
 
