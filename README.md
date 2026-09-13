@@ -39,7 +39,7 @@ Fresh scaffold replacing the previous prototype. Current milestone:
 
 ## Develop
 
-See [BUILD.md](./BUILD.md) for Linux packaging, release-profile tradeoffs, and Windows/macOS TODOs.
+See [BUILD.md](./BUILD.md) for Linux packaging, release-profile tradeoffs, and **Windows/macOS GitHub Actions installers** (Actions → *Build installers* → Artifacts).
 
 ```bash
 npm install
@@ -95,3 +95,4 @@ See [`scripts/ingestion/README.md`](./scripts/ingestion/README.md) for politenes
 
 The runtime app must never call OpenAI, Anthropic, Gemini, Groq, or any other hosted LLM API. Reject proposals to add them.
 # Faqih-AI
+# faqih.ai
