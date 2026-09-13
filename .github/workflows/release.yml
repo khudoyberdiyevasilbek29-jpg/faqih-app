@@ -32,6 +32,16 @@ jobs:
 
       - name: Install protoc
         uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Place protoc for with-protoc.sh
+        shell: bash
+        run: |
+          mkdir -p src-tauri/.tools/protoc/bin
+          PROTOC_PATH="$(command -v protoc)"
+          cp "$PROTOC_PATH" src-tauri/.tools/protoc/bin/protoc
+          chmod +x src-tauri/.tools/protoc/bin/protoc
 
       - name: Install dependencies
         run: npm install
