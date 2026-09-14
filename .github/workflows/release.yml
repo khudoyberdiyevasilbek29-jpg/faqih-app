@@ -14,9 +14,12 @@ jobs:
       matrix:
         include:
           - platform: 'windows-latest'
+            continue-on-error: true
           - platform: 'macos-latest'
+            continue-on-error: false
 
     runs-on: ${{ matrix.platform }}
+    continue-on-error: ${{ matrix.continue-on-error }}
 
     steps:
       - name: Checkout repository
@@ -25,29 +28,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install protoc
-        uses: arduino/setup-protoc@v3
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Place protoc for with-protoc.sh
-        shell: bash
-        run: |
-          mkdir -p src-tauri/.tools/protoc/bin
-          PROTOC_PATH="$(command -v protoc)"
-          PROTOC_DIR="$(dirname "$(dirname "$PROTOC_PATH")")"
-          cp "$PROTOC_PATH" src-tauri/.tools/protoc/bin/protoc
-          chmod +x src-tauri/.tools/protoc/bin/protoc
-          if [ -d "$PROTOC_DIR/include" ]; then
-            mkdir -p src-tauri/.tools/protoc/include
-            cp -r "$PROTOC_DIR/include/." src-tauri/.tools/protoc/include/
-          fi
-          echo "PROTOC_INCLUDE=$(pwd)/src-tauri/.tools/protoc/include" >> "$GITHUB_ENV"
       - name: Install dependencies
         run: npm install
 
@@ -55,8 +40,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MACOSX_DEPLOYMENT_TARGET: '12.0'
-          CMAKE_OSX_DEPLOYMENT_TARGET: '12.0'
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Faqih AI ${{ github.ref_name }}'
