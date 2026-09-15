@@ -37,6 +37,11 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "resources": {
+      "resources/models/tokenizer.json": "models/tokenizer.json",
+      "resources/models/multilingual-e5-small.onnx": "models/multilingual-e5-small.onnx",
+      "resources/lexuz.db/": "lexuz.db/"
+    }
   }
 }
