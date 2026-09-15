@@ -97,14 +97,20 @@ jobs:
       - name: Stage portable protoc for with-protoc.sh
         shell: bash
         run: |
-          mkdir -p src-tauri/.tools/protoc/bin
           PROTOC_BIN="$(command -v protoc)"
           if [ -z "$PROTOC_BIN" ]; then
             echo "protoc not found on PATH after setup-protoc step" >&2
             exit 1
           fi
-          cp "$PROTOC_BIN" src-tauri/.tools/protoc/bin/protoc
-          chmod +x src-tauri/.tools/protoc/bin/protoc
+          PROTOC_ROOT="$(cd "$(dirname "$PROTOC_BIN")/.." && pwd)"
+          echo "Detected protoc install root: $PROTOC_ROOT"
+          ls "$PROTOC_ROOT"
+          mkdir -p src-tauri/.tools/protoc
+          cp -r "$PROTOC_ROOT"/. src-tauri/.tools/protoc/
+          chmod +x src-tauri/.tools/protoc/bin/protoc*
+          if [ ! -d src-tauri/.tools/protoc/include/google/protobuf ]; then
+            echo "warning: include/google/protobuf not found after copy — well-known types may be missing" >&2
+          fi
 
       - name: Build Tauri installer
         uses: tauri-apps/tauri-action@v1
