@@ -16,6 +16,7 @@ dist-ssr
 *.gguf
 *.onnx
 src-tauri/resources/models/tokenizer.json
+faqih-bundled-resources.tar.gz
 
 # Ingestion pipeline local artifacts
 scripts/ingestion/.venv/

@@ -60,7 +60,8 @@ npm run tauri:dev
 
 ### Package (deb + AppImage)
 
-`tauri.conf.json` sets `"targets": ["deb", "appimage"]`.
+`tauri.conf.json` sets `"targets": ["deb", "appimage", "nsis", "msi", "dmg"]`
+(Linux packaging still uses deb/appimage locally).
 
 ```bash
 cd "/path/to/Faqih AI"
@@ -79,16 +80,27 @@ Artifacts land under `src-tauri/target/release/bundle/` (e.g. `deb/`, `appimage/
 
 ---
 
-## TODO: Windows / macOS
+## Windows / macOS via GitHub Actions
 
-> **Not executed for MVP.** Cross-compile from Linux is unreliable for this stack (`llama-cpp-2`, `ort`, LanceDB native bits). Prefer **native runners** (GitHub Actions `windows-latest` / `macos-latest`, or local Mac/Windows boxes) when packaging those platforms.
+Local Win/mac packaging is heavy on an 8GB machine. Use CI instead:
 
-### Likely next steps (when prioritized)
+**Workflow:** [`.github/workflows/build.yml`](./.github/workflows/build.yml)  
+**Triggers:** Actions → *Build installers (Windows + macOS)* → **Run workflow**, or push to `release` / tag `v*`.  
+**Outputs:** Artifacts on the run page (`.exe`/`.msi` and `.dmg`) — no GitHub Release unless you add one later.  
+**Linux:** skipped in CI (build locally as above).
 
-1. Extend `bundle.targets` (e.g. `nsis` / `msi` on Windows, `dmg` / `app` on macOS) — or temporarily set `"all"` on a native CI matrix.
-2. Verify resource map copies `lexuz.db/` recursively on each OS (LanceDB is a directory tree).
-3. Confirm `sysinfo` process memory units and path separators for the GGUF picker.
-4. Document MSVC + CUDA/CPU ORT notes for Windows; Xcode + notarization for macOS (if distributing outside direct builds).
-5. Re-run the idle-unload + wake (“Uyg'onmoqda...”) checklist on each OS.
+### One-time: bundled resources secret
 
-Until then, treat Linux `deb` / `AppImage` as the only supported ship path.
+ONNX, tokenizer, and `lexuz.db` are gitignored (GGUF is never packaged — matches `tauri.conf.json` `bundle.resources`). CI needs a tarball URL:
+
+```bash
+bash scripts/ci/pack-bundled-resources.sh
+# Host faqih-bundled-resources.tar.gz, then set repo secret:
+# FAQIH_BUNDLE_RESOURCES_URL=<https URL to that archive>
+```
+
+### Likely follow-ups
+
+1. Apple notarization / Windows code signing when distributing outside direct downloads.
+2. Optional Intel Mac target (`--target x86_64-apple-darwin`) if needed.
+3. Re-run idle-unload + wake checklist on each OS installer.

@@ -3,13 +3,18 @@ import { motion } from "framer-motion";
 import type { AppPage } from "../../lib/types";
 import { useUiStore } from "../../store/uiStore";
 
-const navItems: { id: AppPage; label: string }[] = [
-  { id: "chat", label: "Suhbat" },
-  { id: "document-analysis", label: "Hujjat tahlili" },
+const navItems: { id: AppPage; label: string; requiresModel?: boolean }[] = [
+  { id: "chat", label: "Suhbat", requiresModel: true },
+  { id: "document-analysis", label: "Hujjat tahlili", requiresModel: true },
   { id: "settings", label: "Sozlamalar" },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  /** When false, Chat / Document Analysis are disabled. */
+  modelReady?: boolean;
+}
+
+export function Sidebar({ modelReady = true }: SidebarProps) {
   const { page, setPage, sidebarCollapsed, toggleSidebar } = useUiStore();
 
   return (
@@ -42,19 +47,30 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 px-3">
-        {navItems.map(({ id, label }) => {
+        {navItems.map(({ id, label, requiresModel }) => {
           const active = page === id;
+          const disabled = Boolean(requiresModel && !modelReady);
           return (
             <button
               key={id}
               type="button"
-              onClick={() => setPage(id)}
+              disabled={disabled}
+              onClick={() => {
+                if (disabled) return;
+                setPage(id);
+              }}
               className={`rounded-card px-4 py-2.5 text-left text-[15px] transition-colors duration-soft ${
-                active
-                  ? "bg-surface-muted font-medium text-surface-ink"
-                  : "text-surface-soft hover:bg-surface-muted/70 hover:text-surface-ink"
+                disabled
+                  ? "cursor-not-allowed text-surface-faint opacity-45"
+                  : active
+                    ? "bg-surface-muted font-medium text-surface-ink"
+                    : "text-surface-soft hover:bg-surface-muted/70 hover:text-surface-ink"
               }`}
-              title={label}
+              title={
+                disabled
+                  ? "Avval AI modelini yuklab oling (Sozlamalar yoki sozlash ekrani)"
+                  : label
+              }
             >
               {!sidebarCollapsed ? (
                 <span className="truncate">{label}</span>

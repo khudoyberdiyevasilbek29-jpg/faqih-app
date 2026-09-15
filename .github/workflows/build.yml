@@ -1,0 +1,106 @@
+# Build Faqih AI installers for Windows and macOS (artifacts only — no GitHub Release).
+#
+# How to trigger (manual):
+#   1. Open the repo on GitHub → Actions
+#   2. Select "Build installers (Windows + macOS)"
+#   3. Click "Run workflow" → choose branch → Run
+#
+# How to download results:
+#   Open the completed run → Artifacts section → download
+#   `windows-…` (.exe / .msi) and `macos-…` (.dmg) zip archives.
+#
+# Also runs on push to branch `release` or tags matching `v*` (e.g. v0.1.0).
+#
+# Bundled resources (tokenizer, ONNX, lexuz.db) are gitignored locally.
+# Set repository secret FAQIH_BUNDLE_RESOURCES_URL to a .tar.gz of:
+#   models/tokenizer.json
+#   models/multilingual-e5-small.onnx
+#   lexuz.db/   (LanceDB directory)
+# Pack with:  bash scripts/ci/pack-bundled-resources.sh
+# GGUF is NEVER bundled — first-run download inside the app
+# (matches tauri.conf.json bundle.resources — no *.gguf entries).
+
+name: Build installers (Windows + macOS)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - release
+    tags:
+      - "v*"
+
+concurrency:
+  group: build-installers-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # GitHub-hosted runners are memory-tight for full LTO + llama/ort/lancedb.
+  CARGO_PROFILE_RELEASE_LTO: "thin"
+  CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "8"
+
+jobs:
+  build:
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: "--bundles nsis,msi"
+          - platform: macos-latest
+            args: "--bundles dmg"
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install protoc (LanceDB build)
+        uses: arduino/setup-protoc@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install LLVM (Windows — llama-cpp-2 bindgen)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          choco install llvm -y --no-progress
+          echo "LIBCLANG_PATH=C:/Program Files/LLVM/bin" >> "$GITHUB_ENV"
+          echo "C:/Program Files/LLVM/bin" >> "$GITHUB_PATH"
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Prepare bundled resources (no GGUF)
+        shell: bash
+        env:
+          FAQIH_BUNDLE_RESOURCES_URL: ${{ secrets.FAQIH_BUNDLE_RESOURCES_URL }}
+        run: bash scripts/ci/prepare-bundled-resources.sh
+
+      - name: Build Tauri installer
+        uses: tauri-apps/tauri-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Artifacts only — omit tagName/releaseName so no GitHub Release is created
+          uploadWorkflowArtifacts: true
+          workflowArtifactNamePattern: "[platform]-[arch]-[bundle]"
+          args: ${{ matrix.args }}
