@@ -35,7 +35,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # GitHub-hosted runners are memory-tight for full LTO + llama/ort/lancedb.
   CARGO_PROFILE_RELEASE_LTO: "thin"
   CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "8"
 
@@ -95,12 +94,23 @@ jobs:
           FAQIH_BUNDLE_RESOURCES_URL: ${{ secrets.FAQIH_BUNDLE_RESOURCES_URL }}
         run: bash scripts/ci/prepare-bundled-resources.sh
 
+      - name: Stage portable protoc for with-protoc.sh
+        shell: bash
+        run: |
+          mkdir -p src-tauri/.tools/protoc/bin
+          PROTOC_BIN="$(command -v protoc)"
+          if [ -z "$PROTOC_BIN" ]; then
+            echo "protoc not found on PATH after setup-protoc step" >&2
+            exit 1
+          fi
+          cp "$PROTOC_BIN" src-tauri/.tools/protoc/bin/protoc
+          chmod +x src-tauri/.tools/protoc/bin/protoc
+
       - name: Build Tauri installer
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          # Artifacts only — omit tagName/releaseName so no GitHub Release is created
           uploadWorkflowArtifacts: true
           workflowArtifactNamePattern: "[platform]-[arch]-[bundle]"
           args: ${{ matrix.args }}
