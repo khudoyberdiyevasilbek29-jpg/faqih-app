@@ -87,7 +87,7 @@ jobs:
           echo "C:/Program Files/LLVM/bin" >> "$GITHUB_PATH"
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: npm install
 
       - name: Prepare bundled resources (no GGUF)
         shell: bash
