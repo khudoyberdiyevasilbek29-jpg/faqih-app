@@ -96,7 +96,7 @@ jobs:
         run: bash scripts/ci/prepare-bundled-resources.sh
 
       - name: Build Tauri installer
-        uses: tauri-apps/tauri-action@v2
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
