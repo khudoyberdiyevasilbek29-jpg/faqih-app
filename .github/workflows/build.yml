@@ -38,6 +38,7 @@ env:
   CARGO_PROFILE_RELEASE_LTO: "thin"
   CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "8"
   MACOSX_DEPLOYMENT_TARGET: "11.0"
+  CMAKE_OSX_DEPLOYMENT_TARGET: "11.0"
 
 jobs:
   build:
@@ -113,6 +114,9 @@ jobs:
           if [ ! -d src-tauri/.tools/protoc/include/google/protobuf ]; then
             echo "warning: include/google/protobuf not found after copy — well-known types may be missing" >&2
           fi
+          ABS_INCLUDE="$(cd src-tauri/.tools/protoc/include && pwd)"
+          echo "PROTOC_INCLUDE=$ABS_INCLUDE" >> "$GITHUB_ENV"
+          echo "Set PROTOC_INCLUDE=$ABS_INCLUDE"
 
       - name: Build Tauri installer
         uses: tauri-apps/tauri-action@v1
