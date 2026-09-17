@@ -34,7 +34,7 @@ encoding_rs = "0.8"
 # AI / retrieval — pins verified at project setup (2026-09-09)
 llama-cpp-2 = "0.1.156"
 ort = "2.0.0-rc.13"
-tokenizers = "0.21"
+tokenizers = { version = "0.21", default-features = false }
 ndarray = "0.16"
 lancedb = { version = "0.38", default-features = false, features = ["remote"] }
 arrow-array = "58"
@@ -54,3 +54,6 @@ lto = true
 opt-level = 3
 panic = "abort"
 strip = true
+
+[patch.crates-io]
+esaxx-rs = { git = "https://github.com/ocentra/esaxx-rs", rev = "4f4fd5acd624e43c770a0d198fcaa9d97bfd7f0b" }
