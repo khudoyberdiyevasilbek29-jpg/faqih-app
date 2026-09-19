@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../../lib/types";
@@ -13,17 +12,10 @@ export function MessageBubble({ message, streaming = false }: MessageBubbleProps
   const isUser = message.role === "user";
 
   return (
-    <motion.div
-      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-    >
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={`max-w-[min(100%,36rem)] px-1 py-1 text-[15px] leading-[1.7] ${
-          isUser
-            ? "glass relative text-surface-ink"
-            : "text-surface-ink"
+          isUser ? "glass relative text-surface-ink" : "text-surface-ink"
         }`}
       >
         {isUser ? (
@@ -42,6 +34,6 @@ export function MessageBubble({ message, streaming = false }: MessageBubbleProps
           <SourcesSection references={message.references ?? []} />
         ) : null}
       </div>
-    </motion.div>
+    </div>
   );
 }

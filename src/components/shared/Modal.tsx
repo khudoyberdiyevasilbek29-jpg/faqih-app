@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
 interface ModalProps {
   open: boolean;
@@ -8,33 +7,31 @@ interface ModalProps {
   onClose: () => void;
 }
 
+/** Lightweight modal: opacity/transform only — no Framer, no layout animation. */
 export function Modal({ open, title, children, onClose }: ModalProps) {
+  if (!open) return null;
+
   return (
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          className="glass-dim fixed inset-0 z-50 flex items-center justify-center p-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-          onClick={onClose}
+    <div
+      className="glass-dim fixed inset-0 z-50 flex items-center justify-center p-8"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="glass-strong relative w-full max-w-md p-7"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="faqih-modal-title"
+      >
+        <h2
+          id="faqih-modal-title"
+          className="relative z-[1] mb-4 text-lg font-semibold text-surface-ink"
         >
-          <motion.div
-            className="glass-strong relative w-full max-w-md p-7"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 className="relative z-[1] mb-4 text-lg font-semibold text-surface-ink">
-              {title}
-            </h2>
-            <div className="relative z-[1]">{children}</div>
-          </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
+          {title}
+        </h2>
+        <div className="relative z-[1]">{children}</div>
+      </div>
+    </div>
   );
 }

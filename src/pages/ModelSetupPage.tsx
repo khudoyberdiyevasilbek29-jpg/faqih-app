@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import {
   downloadDefaultModel,
   getModelSetupStatus,
@@ -110,12 +109,7 @@ export function ModelSetupPage({ onReady }: ModelSetupPageProps) {
 
   return (
     <div className="flex h-full items-center justify-center bg-surface-base px-8 py-12">
-      <motion.div
-        className="w-full max-w-lg"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.22 }}
-      >
+      <div className="w-full max-w-lg">
         <p className="wordmark text-2xl text-surface-ink">Faqih AI</p>
         <h1 className="mt-10 wordmark text-[1.75rem] leading-snug text-surface-ink">
           Bir martalik sozlash
@@ -155,11 +149,9 @@ export function ModelSetupPage({ onReady }: ModelSetupPageProps) {
               <span className="text-surface-faint">{percent}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
-              <motion.div
-                className="h-full rounded-full bg-accent"
-                initial={false}
-                animate={{ width: `${percent}%` }}
-                transition={{ duration: 0.2 }}
+              <div
+                className="h-full rounded-full bg-accent transition-[width] duration-150 ease-out"
+                style={{ width: `${percent}%` }}
               />
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-surface-faint">
@@ -190,7 +182,7 @@ export function ModelSetupPage({ onReady }: ModelSetupPageProps) {
             </div>
           </div>
         ) : null}
-      </motion.div>
+      </div>
     </div>
   );
 }

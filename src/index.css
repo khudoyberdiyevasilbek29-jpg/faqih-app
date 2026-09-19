@@ -90,11 +90,11 @@
     border: 1px solid var(--glass-border);
     box-shadow: theme("boxShadow.glass");
     transition:
-      transform 240ms theme("transitionTimingFunction.press"),
-      background-color 240ms theme("transitionTimingFunction.glass"),
-      box-shadow 240ms theme("transitionTimingFunction.glass"),
-      border-color 240ms theme("transitionTimingFunction.glass"),
-      filter 240ms theme("transitionTimingFunction.glass");
+      transform theme("transitionDuration.soft") theme("transitionTimingFunction.press"),
+      background-color theme("transitionDuration.soft") theme("transitionTimingFunction.glass"),
+      box-shadow theme("transitionDuration.soft") theme("transitionTimingFunction.glass"),
+      border-color theme("transitionDuration.soft") theme("transitionTimingFunction.glass"),
+      filter theme("transitionDuration.soft") theme("transitionTimingFunction.glass");
   }
 
   .glass::before {
@@ -123,11 +123,11 @@
     border: 1px solid var(--glass-border);
     box-shadow: theme("boxShadow.glass");
     transition:
-      transform 240ms theme("transitionTimingFunction.press"),
-      background-color 240ms theme("transitionTimingFunction.glass"),
-      box-shadow 240ms theme("transitionTimingFunction.glass"),
-      border-color 240ms theme("transitionTimingFunction.glass"),
-      filter 240ms theme("transitionTimingFunction.glass");
+      transform theme("transitionDuration.soft") theme("transitionTimingFunction.press"),
+      background-color theme("transitionDuration.soft") theme("transitionTimingFunction.glass"),
+      box-shadow theme("transitionDuration.soft") theme("transitionTimingFunction.glass"),
+      border-color theme("transitionDuration.soft") theme("transitionTimingFunction.glass"),
+      filter theme("transitionDuration.soft") theme("transitionTimingFunction.glass");
   }
 
   .glass-strong::before {
@@ -157,10 +157,10 @@
     border: 1px solid rgba(255, 255, 255, 0.28);
     box-shadow: theme("boxShadow.glass");
     transition:
-      transform 240ms theme("transitionTimingFunction.press"),
-      background-color 240ms theme("transitionTimingFunction.glass"),
-      filter 240ms theme("transitionTimingFunction.glass"),
-      box-shadow 240ms theme("transitionTimingFunction.glass");
+      transform theme("transitionDuration.soft") theme("transitionTimingFunction.press"),
+      background-color theme("transitionDuration.soft") theme("transitionTimingFunction.glass"),
+      filter theme("transitionDuration.soft") theme("transitionTimingFunction.glass"),
+      box-shadow theme("transitionDuration.soft") theme("transitionTimingFunction.glass");
   }
 
   .glass-primary::before {
@@ -205,6 +205,97 @@
     .glass-dim {
       -webkit-backdrop-filter: blur(12px) saturate(1.1);
       backdrop-filter: blur(12px) saturate(1.1);
+    }
+  }
+
+  /*
+   * Windows WebView2: backdrop-filter + large soft shadows are disproportionately
+   * expensive vs WKWebView. Prefer opaque/semi-opaque fills; keep Mac blur intact.
+   */
+  html.platform-windows .glass,
+  html.platform-windows .glass-strong,
+  html.platform-windows .glass-primary,
+  html.platform-windows .glass-dim {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: 0 1px 0 rgba(44, 42, 38, 0.04);
+    transition:
+      transform 160ms theme("transitionTimingFunction.press"),
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  html.platform-windows .glass {
+    background-color: var(--glass-fallback);
+  }
+
+  html.platform-windows .glass-strong {
+    background-color: var(--glass-fallback);
+  }
+
+  html.platform-windows .glass-primary {
+    background-color: var(--glass-fallback-accent);
+  }
+
+  html.platform-windows .glass-dim {
+    background-color: rgba(44, 42, 38, 0.42);
+  }
+
+  html.platform-windows.dark .glass-dim,
+  html.platform-windows .glass-dim {
+    background-color: var(--glass-dim);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html.platform-windows .glass-dim {
+      background-color: rgba(0, 0, 0, 0.55);
+    }
+  }
+
+  html.platform-windows .glass-interactive:hover,
+  html.platform-windows .glass-interactive:active {
+    filter: none;
+  }
+
+  html.platform-windows .glass-interactive:hover {
+    background-color: color-mix(in srgb, var(--glass-fallback) 92%, var(--surface-muted));
+  }
+
+  html.platform-windows .glass-primary.glass-interactive:hover {
+    background-color: color-mix(in srgb, var(--glass-fallback-accent) 90%, #000);
+  }
+
+  html.platform-windows body {
+    background-image: none;
+  }
+
+  /* Sidebar width change: avoid Framer layout animation; cheap CSS on non-Windows. */
+  .faqih-sidebar {
+    width: 220px;
+    will-change: auto;
+  }
+
+  .faqih-sidebar.is-collapsed {
+    width: 64px;
+  }
+
+  html:not(.platform-windows) .faqih-sidebar {
+    transition: width 180ms ease-out;
+  }
+
+  html.platform-windows .faqih-sidebar {
+    transition: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faqih-sidebar,
+    .glass,
+    .glass-strong,
+    .glass-primary,
+    .glass-interactive:active {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
     }
   }
 
@@ -287,4 +378,28 @@
     background-color: var(--surface-muted);
     padding: 0.75rem;
   }
+}
+
+/* Lightweight engine-load feedback (no Framer Motion). */
+@keyframes faqih-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes faqih-progress-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+.faqih-spinner {
+  animation: faqih-spin 0.7s linear infinite;
+}
+
+.faqih-progress-indeterminate {
+  animation: faqih-progress-slide 1.1s ease-in-out infinite;
 }

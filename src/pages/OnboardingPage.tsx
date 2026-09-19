@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Scale, MessageCircle, FileSearch, Lock } from "lucide-react";
 import { saveSettings } from "../lib/api";
 import type { AppSettings } from "../lib/types";
@@ -79,50 +78,40 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
         <p className="mt-1 text-sm text-surface-faint">by MOND</p>
 
         <div className="mt-16 min-h-[280px]">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={screen.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-            >
-              <div className="glass relative mb-8 flex h-14 w-14 items-center justify-center text-accent">
-                <screen.icon className="relative z-[1] h-6 w-6" strokeWidth={1.5} />
-              </div>
+          <div className="glass relative mb-8 flex h-14 w-14 items-center justify-center text-accent">
+            <screen.icon className="relative z-[1] h-6 w-6" strokeWidth={1.5} />
+          </div>
 
-              <h1 className="wordmark text-[1.75rem] leading-snug text-surface-ink md:text-[2rem]">
-                {screen.title}
-              </h1>
+          <h1 className="wordmark text-[1.75rem] leading-snug text-surface-ink md:text-[2rem]">
+            {screen.title}
+          </h1>
 
-              {"body" in screen && screen.body ? (
-                <p className="mt-5 max-w-md text-[17px] leading-relaxed text-surface-soft">
-                  {screen.body}
-                </p>
-              ) : null}
+          {"body" in screen && screen.body ? (
+            <p className="mt-5 max-w-md text-[17px] leading-relaxed text-surface-soft">
+              {screen.body}
+            </p>
+          ) : null}
 
-              {"features" in screen && screen.features ? (
-                <div className="mt-8 space-y-6">
-                  {screen.features.map((feature) => (
-                    <div key={feature.title} className="flex gap-4">
-                      <feature.icon
-                        className="mt-0.5 h-5 w-5 shrink-0 text-accent"
-                        strokeWidth={1.5}
-                      />
-                      <div>
-                        <p className="text-base font-semibold text-surface-ink">
-                          {feature.title}
-                        </p>
-                        <p className="mt-1 text-[15px] leading-relaxed text-surface-soft">
-                          {feature.text}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+          {"features" in screen && screen.features ? (
+            <div className="mt-8 space-y-6">
+              {screen.features.map((feature) => (
+                <div key={feature.title} className="flex gap-4">
+                  <feature.icon
+                    className="mt-0.5 h-5 w-5 shrink-0 text-accent"
+                    strokeWidth={1.5}
+                  />
+                  <div>
+                    <p className="text-base font-semibold text-surface-ink">
+                      {feature.title}
+                    </p>
+                    <p className="mt-1 text-[15px] leading-relaxed text-surface-soft">
+                      {feature.text}
+                    </p>
+                  </div>
                 </div>
-              ) : null}
-            </motion.div>
-          </AnimatePresence>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-12 flex items-center justify-between gap-4">
@@ -133,7 +122,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
                 type="button"
                 aria-label={`Sahifa ${i + 1}`}
                 onClick={() => setIndex(i)}
-                className={`h-2 rounded-full transition-all duration-soft ${
+                className={`h-2 rounded-full transition-[width,background-color] duration-150 ${
                   i === index
                     ? "w-6 bg-accent"
                     : "w-2 bg-surface-border hover:bg-surface-faint"
@@ -148,7 +137,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
                 type="button"
                 onClick={() => void finish()}
                 disabled={saving}
-                className="px-2 py-2 text-sm text-surface-faint transition-colors hover:text-surface-soft"
+                className="px-2 py-2 text-sm text-surface-faint transition-colors duration-150 hover:text-surface-soft"
               >
                 O&apos;tkazib yuborish
               </button>

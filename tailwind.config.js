@@ -54,9 +54,9 @@ export default {
         prose: "42rem",
       },
       transitionDuration: {
-        fast: "180ms",
-        soft: "240ms",
-        panel: "280ms",
+        fast: "150ms",
+        soft: "180ms",
+        panel: "200ms",
       },
       transitionTimingFunction: {
         glass: "cubic-bezier(0.22, 1, 0.36, 1)",
@@ -67,9 +67,10 @@ export default {
         panel: "28px",
       },
       boxShadow: {
-        glass: "0 8px 32px rgba(44, 42, 38, 0.06), inset 0 1px 0 rgba(255,255,255,0.35)",
+        // Softer / cheaper default shadow (was 32px blur).
+        glass: "0 1px 0 rgba(44, 42, 38, 0.05), 0 4px 16px rgba(44, 42, 38, 0.04)",
         "glass-dark":
-          "0 8px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.12)",
+          "0 1px 0 rgba(255,255,255,0.08), 0 4px 16px rgba(0, 0, 0, 0.22)",
       },
     },
   },
