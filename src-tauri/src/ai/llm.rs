@@ -14,8 +14,10 @@ use llama_cpp_2::llama_batch::LlamaBatch;
 use llama_cpp_2::model::params::LlamaModelParams;
 use llama_cpp_2::model::{AddBos, LlamaChatMessage, LlamaChatTemplate, LlamaModel};
 use llama_cpp_2::sampling::LlamaSampler;
+use tauri::{AppHandle, Manager};
 use tracing::{info, warn};
 
+use crate::engine_progress::{self, EngineProgress, EngineStage};
 use crate::paths;
 
 const PENALTY_REPEAT: f32 = 1.12;
@@ -115,6 +117,8 @@ pub struct LlmEngine {
     model_path: Arc<Mutex<Option<PathBuf>>>,
     template_source_label: Arc<Mutex<Option<String>>>,
     config: Arc<Mutex<LlmConfig>>,
+    /// Optional handle for emitting load/wake progress to the UI.
+    app_handle: Arc<Mutex<Option<AppHandle>>>,
 }
 
 impl LlmEngine {
@@ -132,7 +136,25 @@ impl LlmEngine {
             model_path: Arc::new(Mutex::new(None)),
             template_source_label: Arc::new(Mutex::new(None)),
             config: Arc::new(Mutex::new(config)),
+            app_handle: Arc::new(Mutex::new(None)),
         })
+    }
+
+    pub fn set_app_handle(&self, handle: AppHandle) {
+        if let Ok(mut guard) = self.app_handle.lock() {
+            *guard = Some(handle);
+        }
+    }
+
+    fn emit_load_progress(&self, progress: EngineProgress) {
+        let handle = self
+            .app_handle
+            .lock()
+            .ok()
+            .and_then(|g| g.clone());
+        if let Some(app) = handle {
+            engine_progress::publish(&app, progress);
+        }
     }
 
     pub fn is_loading(&self) -> bool {
@@ -233,6 +255,10 @@ impl LlmEngine {
         let from_idle = self.idle_unloaded.load(Ordering::SeqCst);
         if from_idle {
             self.waking.store(true, Ordering::SeqCst);
+            self.emit_load_progress(EngineProgress::stage(
+                EngineStage::LoadingLlm,
+                None,
+            ));
         }
         if !self.is_loading() {
             if from_idle {
@@ -247,14 +273,22 @@ impl LlmEngine {
                 self.waking.store(false, Ordering::SeqCst);
                 self.idle_unloaded.store(false, Ordering::SeqCst);
                 self.touch_activity();
+                if from_idle {
+                    self.emit_load_progress(EngineProgress::ready());
+                }
                 return Ok(());
             }
             if !self.is_loading() {
                 self.waking.store(false, Ordering::SeqCst);
-                return Err(LlmError::Load(
-                    self.last_error()
-                        .unwrap_or_else(|| "Model failed to load".into()),
-                ));
+                let msg = self
+                    .last_error()
+                    .unwrap_or_else(|| "Model failed to load".into());
+                if from_idle {
+                    self.emit_load_progress(EngineProgress::error(format!(
+                        "Til modelini uyg‘otib bo‘lmadi: {msg}. Dasturni qayta oching yoki modelni qayta yuklang."
+                    )));
+                }
+                return Err(LlmError::Load(msg));
             }
             thread::sleep(WAKE_POLL_INTERVAL);
         }
@@ -273,6 +307,9 @@ impl LlmEngine {
                 *err = Some(format!("Model path does not exist: {}", path.display()));
             }
             self.waking.store(false, Ordering::SeqCst);
+            self.emit_load_progress(EngineProgress::error(
+                "AI model fayli topilmadi. Sozlamalar orqali modelni qayta tanlang yoki qayta yuklab oling.",
+            ));
             return;
         }
 
@@ -285,6 +322,7 @@ impl LlmEngine {
             *guard = Some(path.clone());
         }
         self.touch_activity();
+        self.emit_load_progress(EngineProgress::stage(EngineStage::LoadingLlm, None));
 
         let backend = Arc::clone(&self.backend);
         let loaded = Arc::clone(&self.loaded);
@@ -296,6 +334,7 @@ impl LlmEngine {
         let template_source_label = Arc::clone(&self.template_source_label);
         let config = Arc::clone(&self.config);
         let last_activity = Arc::clone(&self.last_activity);
+        let app_handle = Arc::clone(&self.app_handle);
 
         thread::spawn(move || {
             let result = (|| -> Result<LoadedLlm, LlmError> {
@@ -354,6 +393,20 @@ impl LlmEngine {
                     }
                     idle_unloaded.store(false, Ordering::SeqCst);
                     info!("GGUF model loaded successfully");
+                    // After cold-start warm-up (or settings reload), announce Ready.
+                    if let Ok(guard) = app_handle.lock() {
+                        if let Some(app) = guard.as_ref() {
+                            if let Some(state) = app.try_state::<crate::state::AppState>() {
+                                if state.warmup_finished.load(Ordering::SeqCst) {
+                                    let has_embeddings = state.embeddings.lock().is_some();
+                                    let has_store = state.vector_store.lock().is_some();
+                                    if has_embeddings && has_store {
+                                        engine_progress::publish(app, EngineProgress::ready());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 Err(err) => {
                     warn!(error = %err, "GGUF model load failed");
@@ -362,6 +415,16 @@ impl LlmEngine {
                     }
                     if let Ok(mut guard) = loaded.lock() {
                         *guard = None;
+                    }
+                    if let Ok(guard) = app_handle.lock() {
+                        if let Some(app) = guard.as_ref() {
+                            engine_progress::publish(
+                                app,
+                                EngineProgress::error(format!(
+                                    "Til modelini yuklab bo‘lmadi: {err}. Model faylini qayta yuklab oling yoki Sozlamalardan boshqa GGUF tanlang."
+                                )),
+                            );
+                        }
                     }
                 }
             }
@@ -406,6 +469,19 @@ impl LlmEngine {
     where
         F: FnMut(&str) + Send + 'static,
     {
+        self.generate_stream_with_temp(prompt, max_tokens, 0.7, on_token)
+    }
+
+    pub fn generate_stream_with_temp<F>(
+        &self,
+        prompt: &str,
+        max_tokens: Option<u32>,
+        temperature: f32,
+        on_token: F,
+    ) -> Result<(String, StopReason), LlmError>
+    where
+        F: FnMut(&str) + Send + 'static,
+    {
         self.touch_activity();
         self.inference_active.store(true, Ordering::SeqCst);
 
@@ -420,7 +496,8 @@ impl LlmEngine {
             on_token(piece);
         };
 
-        let result = self.generate_stream_inner(prompt, max_tokens, &mut callback);
+        let result =
+            self.generate_stream_inner(prompt, max_tokens, temperature, &mut callback);
         self.inference_active.store(false, Ordering::SeqCst);
         self.touch_activity();
 
@@ -436,6 +513,7 @@ impl LlmEngine {
         &self,
         prompt: &str,
         max_tokens: Option<u32>,
+        temperature: f32,
         on_token: &mut dyn FnMut(&str),
     ) -> Result<StopReason, LlmError> {
         let mut guard = self
@@ -510,12 +588,20 @@ impl LlmEngine {
         }
 
         let n_vocab = llm.model.n_vocab();
-        let mut sampler = LlamaSampler::chain_simple([
-            LlamaSampler::penalties(n_vocab, PENALTY_LAST_N, PENALTY_REPEAT, 0.0, 0.0),
-            LlamaSampler::top_p(0.9, 1),
-            LlamaSampler::temp(0.7),
-            LlamaSampler::dist(42),
-        ]);
+        let temperature = temperature.clamp(0.0, 2.0);
+        let mut sampler = if temperature <= 0.05 {
+            LlamaSampler::chain_simple([
+                LlamaSampler::penalties(n_vocab, PENALTY_LAST_N, PENALTY_REPEAT, 0.0, 0.0),
+                LlamaSampler::greedy(),
+            ])
+        } else {
+            LlamaSampler::chain_simple([
+                LlamaSampler::penalties(n_vocab, PENALTY_LAST_N, PENALTY_REPEAT, 0.0, 0.0),
+                LlamaSampler::top_p(0.9, 1),
+                LlamaSampler::temp(temperature),
+                LlamaSampler::dist(42),
+            ])
+        };
 
         let mut decoder = UTF_8.new_decoder();
         // Absolute KV position for the next generated token (= prompt length).
@@ -579,6 +665,15 @@ impl LlmEngine {
 
     pub fn generate(&self, prompt: &str, max_tokens: Option<u32>) -> Result<(String, StopReason), LlmError> {
         self.generate_stream(prompt, max_tokens, |_piece| {})
+    }
+
+    pub fn generate_with_temp(
+        &self,
+        prompt: &str,
+        max_tokens: Option<u32>,
+        temperature: f32,
+    ) -> Result<(String, StopReason), LlmError> {
+        self.generate_stream_with_temp(prompt, max_tokens, temperature, |_piece| {})
     }
 
     pub fn n_ctx(&self) -> u32 {

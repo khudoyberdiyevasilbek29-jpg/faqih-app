@@ -122,4 +122,7 @@ pub struct ContradictionReport {
     pub contradictions: Vec<ContradictionItem>,
     pub document_length_chars: usize,
     pub was_chunked: bool,
+    /// True when the model output could not be trusted / parsed.
+    #[serde(default)]
+    pub analysis_failed: bool,
 }

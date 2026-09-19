@@ -12,6 +12,7 @@ import type {
   ChatStreamEndEvent,
   ChatTokenEvent,
   ContradictionReport,
+  EngineProgress,
   HelloWorldResponse,
   ModelDownloadProgress,
   ModelSetupStatus,
@@ -23,6 +24,7 @@ import type {
 export const CHAT_TOKEN_EVENT = "chat-token";
 export const CHAT_STREAM_END_EVENT = "chat-stream-end";
 export const MODEL_DOWNLOAD_PROGRESS_EVENT = "model-download-progress";
+export const ENGINE_PROGRESS_EVENT = "engine-progress";
 
 export function helloWorld(name: string): Promise<HelloWorldResponse> {
   return invoke<HelloWorldResponse>("hello_world", { name });
@@ -38,6 +40,10 @@ export function saveSettings(settings: AppSettings): Promise<void> {
 
 export function getModelStatus(): Promise<ModelStatus> {
   return invoke<ModelStatus>("get_model_status");
+}
+
+export function getEngineProgress(): Promise<EngineProgress> {
+  return invoke<EngineProgress>("get_engine_progress");
 }
 
 export function setModelPath(path: string): Promise<ModelStatus> {
@@ -60,6 +66,14 @@ export async function onModelDownloadProgress(
   handler: (event: ModelDownloadProgress) => void,
 ): Promise<UnlistenFn> {
   return listen<ModelDownloadProgress>(MODEL_DOWNLOAD_PROGRESS_EVENT, (event) => {
+    handler(event.payload);
+  });
+}
+
+export async function onEngineProgress(
+  handler: (event: EngineProgress) => void,
+): Promise<UnlistenFn> {
+  return listen<EngineProgress>(ENGINE_PROGRESS_EVENT, (event) => {
     handler(event.payload);
   });
 }

@@ -10,7 +10,13 @@ import {
 import { SettingsPage } from "./pages/SettingsPage";
 import { OnboardingPage } from "./pages/OnboardingPage";
 import { ModelSetupPage } from "./pages/ModelSetupPage";
-import { getModelSetupStatus, getModelStatus, getSettings } from "./lib/api";
+import {
+  getEngineProgress,
+  getModelSetupStatus,
+  getModelStatus,
+  getSettings,
+  onEngineProgress,
+} from "./lib/api";
 import type { AppSettings, ModelStatus } from "./lib/types";
 import { useChatStore } from "./store/chatStore";
 import { useUiStore } from "./store/uiStore";
@@ -31,6 +37,7 @@ function App() {
   const modelStatus = useChatStore((s) => s.modelStatus);
   const setSettings = useChatStore((s) => s.setSettings);
   const setModelStatus = useChatStore((s) => s.setModelStatus);
+  const setEngineProgress = useChatStore((s) => s.setEngineProgress);
 
   const [booting, setBooting] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -39,13 +46,15 @@ function App() {
 
   const refreshSetup = useCallback(async () => {
     try {
-      const [nextSettings, status, setup] = await Promise.all([
+      const [nextSettings, status, setup, progress] = await Promise.all([
         getSettings(),
         getModelStatus(),
         getModelSetupStatus(),
+        getEngineProgress(),
       ]);
       setSettings(nextSettings);
       setModelStatus(status);
+      setEngineProgress(progress);
       setNeedsOnboarding(!nextSettings.hasSeenOnboarding);
       // `setup.ready` validates the GGUF file on disk (size + magic).
       setNeedsSetup(!setup.ready);
@@ -56,11 +65,38 @@ function App() {
     } finally {
       setBooting(false);
     }
-  }, [setModelStatus, setSettings]);
+  }, [setEngineProgress, setModelStatus, setSettings]);
 
   useEffect(() => {
     void refreshSetup();
   }, [refreshSetup]);
+
+  // Live engine warm-up stages (also catch up via getEngineProgress on mount).
+  useEffect(() => {
+    let cancelled = false;
+    let unlisten: (() => void) | undefined;
+
+    void (async () => {
+      try {
+        const progress = await getEngineProgress();
+        if (!cancelled) setEngineProgress(progress);
+      } catch {
+        /* ignore until backend is up */
+      }
+      try {
+        unlisten = await onEngineProgress((next) => {
+          if (!cancelled) setEngineProgress(next);
+        });
+      } catch {
+        /* web/dev without Tauri */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [setEngineProgress]);
 
   // If the main shell is up but path/status vanish, return to ModelSetupPage.
   useEffect(() => {
@@ -74,17 +110,20 @@ function App() {
     if (needsOnboarding || needsSetup || booting) return;
     let cancelled = false;
     const timer = window.setInterval(() => {
-      void getModelStatus()
-        .then((status) => {
-          if (!cancelled) setModelStatus(status);
+      void Promise.all([getModelStatus(), getEngineProgress()])
+        .then(([status, progress]) => {
+          if (!cancelled) {
+            setModelStatus(status);
+            setEngineProgress(progress);
+          }
         })
         .catch(() => undefined);
-    }, 2500);
+    }, 2000);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [booting, needsOnboarding, needsSetup, setModelStatus]);
+  }, [booting, needsOnboarding, needsSetup, setEngineProgress, setModelStatus]);
 
   if (booting) {
     return (

@@ -11,6 +11,7 @@ interface ChatWindowProps {
   language: LanguagePreference;
   onSend: (value: string) => void;
   disabled?: boolean;
+  disabledReason?: string | null;
   error?: string | null;
 }
 
@@ -21,6 +22,7 @@ export function ChatWindow({
   language,
   onSend,
   disabled,
+  disabledReason,
   error,
 }: ChatWindowProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -77,6 +79,11 @@ export function ChatWindow({
           {error ? (
             <div className="glass relative px-4 py-3 text-sm text-rose-800 dark:text-rose-200">
               <p className="relative z-[1]">{error}</p>
+            </div>
+          ) : null}
+          {disabled && disabledReason && !error ? (
+            <div className="glass relative px-4 py-3 text-sm text-surface-soft">
+              <p className="relative z-[1]">{disabledReason}</p>
             </div>
           ) : null}
           <InputBar

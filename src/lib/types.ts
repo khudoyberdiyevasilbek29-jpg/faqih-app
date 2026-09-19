@@ -54,6 +54,38 @@ export interface ModelStatus {
   templateSource: string | null;
 }
 
+/** Cold-start / wake stages emitted by Rust (`engine-progress`). */
+export type EngineStageId =
+  | "checking_files"
+  | "loading_llm"
+  | "loading_embeddings"
+  | "connecting_db"
+  | "ready"
+  | "error";
+
+export interface EngineProgress {
+  stage: string;
+  stageId: EngineStageId | string;
+  percent: number | null;
+  ready: boolean;
+  error: string | null;
+}
+
+export const ENGINE_STAGE_LABELS: Record<string, string> = {
+  checking_files: "Model fayllari tekshirilmoqda…",
+  loading_llm: "Til modeli yuklanmoqda…",
+  loading_embeddings: "Embedding modeli yuklanmoqda…",
+  connecting_db: "Huquqiy bazaga ulanilmoqda…",
+  ready: "Tayyor",
+  error: "Yuklash xatosi",
+};
+
+export function engineStageLabel(progress: EngineProgress | null): string {
+  if (!progress) return "Yuklanmoqda…";
+  if (progress.error) return progress.error;
+  return ENGINE_STAGE_LABELS[progress.stageId] ?? ENGINE_STAGE_LABELS[progress.stage] ?? "Yuklanmoqda…";
+}
+
 export interface SystemStats {
   totalMemoryBytes: number;
   usedMemoryBytes: number;
@@ -100,6 +132,7 @@ export interface ContradictionReport {
   contradictions: ContradictionItem[];
   documentLengthChars: number;
   wasChunked: boolean;
+  analysisFailed?: boolean;
 }
 
 export interface HelloWorldResponse {

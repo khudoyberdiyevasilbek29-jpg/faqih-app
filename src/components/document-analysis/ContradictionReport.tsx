@@ -6,6 +6,26 @@ interface ContradictionReportViewProps {
 }
 
 export function ContradictionReportView({ report }: ContradictionReportViewProps) {
+  if (report.analysisFailed) {
+    return (
+      <div className="glass relative flex gap-3 p-5 text-sm text-amber-900 dark:text-amber-100">
+        <AlertTriangle
+          className="relative z-[1] mt-0.5 h-4 w-4 shrink-0"
+          strokeWidth={1.5}
+        />
+        <div className="relative z-[1] space-y-2 leading-relaxed">
+          <p className="font-medium text-surface-ink">
+            {report.summary || "Tahlil aniq bo‘lmadi, qayta urinib ko‘ring."}
+          </p>
+          <p className="text-xs text-surface-faint">
+            Model javobi ishonchsiz yoki noto‘g‘ri formatda edi — natija
+            o‘ylab topilmadi. Bir ozdan so‘ng qayta urinib ko‘ring.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <section className="panel-card">
@@ -25,9 +45,10 @@ export function ContradictionReportView({ report }: ContradictionReportViewProps
             strokeWidth={1.5}
           />
           <p className="relative z-[1] leading-relaxed">
-            Hujjat juda uzun bo‘lgani uchun bo‘limlarga bo‘lib tahlil qilindi.
-            Bo‘limlar oralig‘idagi ziddiyatlar topilmasligi mumkin — bu ochiq
-            cheklov.
+            Hujjat uzunligi sababli matn bo‘limlarga bo‘linib tahlil qilindi
+            (qisman qoplash + yakuniy moslashtirish bilan). Bu chegaradagi
+            xatolarni kamaytiradi, lekin juda uzoq joylashgan ziddiyatlar hali
+            ham to‘liq ushlanmasligi mumkin — ochiq cheklov saqlanadi.
           </p>
         </div>
       ) : null}

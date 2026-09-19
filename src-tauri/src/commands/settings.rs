@@ -5,6 +5,7 @@ use sysinfo::{Pid, ProcessesToUpdate, System};
 use tauri::State;
 
 use crate::ai::llm::LlmConfig;
+use crate::engine_progress::EngineProgress;
 use crate::models::{AppSettings, ModelStatus, SystemStats};
 use crate::paths;
 use crate::state::AppState;
@@ -35,6 +36,11 @@ pub fn save_settings(state: State<'_, AppState>, settings: AppSettings) -> Resul
 }
 
 #[tauri::command]
+pub fn get_engine_progress(state: State<'_, AppState>) -> Result<EngineProgress, String> {
+    Ok(state.engine_progress.lock().clone())
+}
+
+#[tauri::command]
 pub fn get_model_status(state: State<'_, AppState>) -> Result<ModelStatus, String> {
     let settings = state.settings.lock().clone();
     let loaded = state.llm.is_loaded();
@@ -52,16 +58,20 @@ pub fn get_model_status(state: State<'_, AppState>) -> Result<ModelStatus, Strin
             .unwrap_or(p)
             .to_string()
     });
+    let progress = state.engine_progress.lock().clone();
     let error = if loaded {
         None
+    } else if let Some(err) = progress.error.clone() {
+        Some(err)
     } else {
         state.llm.last_error().or_else(|| {
             if path.is_none() {
                 Some("AI modeli hali yuklanmagan".into())
-            } else if loading || waking {
+            } else if loading || waking || !progress.ready {
                 None
             } else {
-                Some("AI modeli tayyor emas".into())
+                // Path configured but weights idle-unloaded — not an error.
+                None
             }
         })
     };

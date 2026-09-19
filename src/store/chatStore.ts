@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type {
   AppSettings,
   ChatMessage,
+  EngineProgress,
   LanguagePreference,
   LegalReference,
   ModelStatus,
@@ -13,6 +14,7 @@ interface ChatState {
   streamingContent: string;
   isStreaming: boolean;
   modelStatus: ModelStatus;
+  engineProgress: EngineProgress | null;
   settings: AppSettings;
   error: string | null;
   setSessionId: (id: string | null) => void;
@@ -28,6 +30,7 @@ interface ChatState {
     references: LegalReference[];
   }) => void;
   setModelStatus: (status: ModelStatus) => void;
+  setEngineProgress: (progress: EngineProgress) => void;
   setSettings: (settings: AppSettings) => void;
   setLanguage: (language: LanguagePreference) => void;
   setError: (error: string | null) => void;
@@ -59,6 +62,7 @@ export const useChatStore = create<ChatState>((set) => ({
   streamingContent: "",
   isStreaming: false,
   modelStatus: defaultModelStatus,
+  engineProgress: null,
   settings: defaultSettings,
   error: null,
   setSessionId: (sessionId) => set({ sessionId }),
@@ -91,6 +95,7 @@ export const useChatStore = create<ChatState>((set) => ({
       };
     }),
   setModelStatus: (modelStatus) => set({ modelStatus }),
+  setEngineProgress: (engineProgress) => set({ engineProgress }),
   setSettings: (settings) => set({ settings }),
   setLanguage: (language) =>
     set((state) => ({ settings: { ...state.settings, language } })),

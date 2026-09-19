@@ -20,6 +20,7 @@ const titles: Record<string, { title: string; subtitle: string }> = {
 export function TopBar() {
   const page = useUiStore((s) => s.page);
   const modelStatus = useChatStore((s) => s.modelStatus);
+  const engineProgress = useChatStore((s) => s.engineProgress);
   const meta = titles[page] ?? titles.chat!;
 
   return (
@@ -28,7 +29,7 @@ export function TopBar() {
         <h1 className="text-[15px] font-semibold text-surface-ink">{meta.title}</h1>
         <p className="text-xs text-surface-faint">{meta.subtitle}</p>
       </div>
-      <ModelStatusIndicator status={modelStatus} />
+      <ModelStatusIndicator status={modelStatus} progress={engineProgress} />
     </header>
   );
 }

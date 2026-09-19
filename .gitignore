@@ -42,3 +42,8 @@ src-tauri/.tools/
 *.njsproj
 *.sln
 *.sw?
+
+# Local scratch / alternate cargo targets
+.tmp/
+src-tauri/target-docfix/
+

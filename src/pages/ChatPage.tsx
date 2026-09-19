@@ -1,8 +1,6 @@
 import { useCallback } from "react";
-import {
-  onChatToken,
-  sendChatMessage,
-} from "../lib/api";
+import { onChatToken, sendChatMessage } from "../lib/api";
+import { engineStageLabel } from "../lib/types";
 import { useChatStore } from "../store/chatStore";
 import { ChatWindow } from "../components/chat/ChatWindow";
 import { LegalReferenceCard } from "../components/chat/LegalReferenceCard";
@@ -15,6 +13,7 @@ export function ChatPage() {
     isStreaming,
     settings,
     modelStatus,
+    engineProgress,
     error,
     addMessage,
     beginStream,
@@ -23,6 +22,29 @@ export function ChatPage() {
     setSessionId,
     setError,
   } = useChatStore();
+
+  const enginesReady = Boolean(engineProgress?.ready);
+  const warming =
+    modelStatus.waking ||
+    modelStatus.loading ||
+    Boolean(engineProgress && !engineProgress.ready && engineProgress.stageId !== "error");
+  const engineFailed = Boolean(engineProgress?.error);
+  const noModel = !modelStatus.path && !modelStatus.loaded && !settings.modelPath;
+  const sendDisabled = warming || engineFailed || noModel || !enginesReady;
+
+  let disabledReason: string | null = null;
+  if (engineFailed) {
+    disabledReason =
+      engineProgress?.error ??
+      "Dvigatel yuklanmadi. Dasturni qayta oching yoki model fayllarini qayta yuklang.";
+  } else if (warming || !enginesReady) {
+    disabledReason = modelStatus.waking
+      ? "Model uyg‘onmoqda — biroz kuting…"
+      : engineStageLabel(engineProgress);
+  } else if (noModel) {
+    disabledReason =
+      "AI modeli yo‘q. Avval sozlash ekranidan yoki Sozlamalardan modelni yuklang.";
+  }
 
   const handleSend = useCallback(
     async (content: string) => {
@@ -77,7 +99,8 @@ export function ChatPage() {
       isStreaming={isStreaming}
       language={settings.language}
       onSend={(value) => void handleSend(value)}
-      disabled={!modelStatus.path && !modelStatus.loaded}
+      disabled={sendDisabled}
+      disabledReason={disabledReason}
       error={error}
     />
   );
