@@ -5,12 +5,14 @@ import {
   ChevronUp,
   Download,
   FolderOpen,
+  Info,
   Save,
 } from "lucide-react";
 import {
   downloadDefaultModel,
   getModelStatus,
   getSystemStats,
+  helloWorld,
   pickGgufFile,
   saveSettings,
   setModelPath,
@@ -26,6 +28,10 @@ import { Button } from "../components/shared/Button";
 import { StatusBadge, modelStatusTone } from "../components/shared/StatusBadge";
 
 const LANGUAGE_OPTIONS: LanguagePreference[] = ["auto", "uz", "ru", "en"];
+
+/** Mirrors `ABOUT_PAGE_TEXT` in `src-tauri/src/ai/static_intent.rs`. */
+const ABOUT_TEXT =
+  "Faqih AI by MOND — O‘zbekiston qonunchiligi bo‘yicha desktop yuridik yordamchi. Dastur 100% oflaynda ishlaydi: bulutli AI yo‘q, internet talab qilinmaydi. Hozirgi qamrov: Mehnat kodeksi va Fuqarolik kodeksi. Bu yuridik maslahat o‘rnini bosmaydi — manbalarni tekshiring.";
 
 function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -79,10 +85,21 @@ export function SettingsPage() {
   const [statsError, setStatsError] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [redownloading, setRedownloading] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>("0.1.0");
 
   useEffect(() => {
     setDraft(settings);
   }, [settings]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void helloWorld("").then((info) => {
+      if (!cancelled && info.version) setAppVersion(info.version);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -171,6 +188,34 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 p-8">
+      <section className="panel-card space-y-3">
+        <div className="flex items-center gap-2">
+          <Info className="h-4 w-4 text-accent" strokeWidth={1.5} />
+          <h2 className="text-sm font-semibold text-surface-ink">Dastur haqida</h2>
+        </div>
+        <p className="text-sm leading-relaxed text-surface-soft">{ABOUT_TEXT}</p>
+        <dl className="grid gap-1.5 text-xs text-surface-faint">
+          <div className="flex justify-between gap-4">
+            <dt>Brend</dt>
+            <dd className="text-surface-soft">Faqih AI by MOND</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt>Versiya</dt>
+            <dd className="text-surface-soft">{appVersion}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt>Rejim</dt>
+            <dd className="text-surface-soft">100% oflayn</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt>Qamrov</dt>
+            <dd className="text-right text-surface-soft">
+              Mehnat kodeksi · Fuqarolik kodeksi
+            </dd>
+          </div>
+        </dl>
+      </section>
+
       <section className="panel-card space-y-3">
         <h2 className="text-sm font-semibold text-surface-ink">AI modeli</h2>
         <p className="text-sm text-surface-soft">

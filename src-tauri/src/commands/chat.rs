@@ -2,6 +2,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::ai::rag::RagPipeline;
+use crate::ai::static_intent::{match_static_intent, static_reply};
 use crate::models::{
     ChatMessageDto, ChatSessionDto, LegalReference, SendChatResponse,
 };
@@ -20,6 +21,42 @@ pub struct ChatTokenEvent {
 #[serde(rename_all = "camelCase")]
 pub struct ChatStreamEndEvent {
     pub stop_reason: String,
+}
+
+fn persist_and_respond(
+    app: &AppHandle,
+    state: &State<'_, AppState>,
+    message: &str,
+    session_id: Option<String>,
+    answer: String,
+    references: Vec<LegalReference>,
+    stop_reason: &str,
+) -> Result<SendChatResponse, String> {
+    let _ = app.emit(
+        CHAT_TOKEN_EVENT,
+        ChatTokenEvent {
+            token: answer.clone(),
+        },
+    );
+    let _ = app.emit(
+        CHAT_STREAM_END_EVENT,
+        ChatStreamEndEvent {
+            stop_reason: stop_reason.to_string(),
+        },
+    );
+
+    let db = state.chat_db.lock();
+    let session_id = db.ensure_session(session_id, message)?;
+    let user_message = db.append_message(&session_id, "user", message, &[])?;
+    let assistant_message =
+        db.append_message(&session_id, "assistant", &answer, &references)?;
+
+    Ok(SendChatResponse {
+        session_id,
+        user_message,
+        assistant_message,
+        stop_reason: stop_reason.to_string(),
+    })
 }
 
 #[tauri::command]
@@ -46,6 +83,20 @@ pub fn send_chat_message(
     if message.is_empty() {
         return Err("Message must not be empty".into());
     }
+
+    // Hardcoded About / off-scope replies — skip RAG + LLM entirely.
+    if let Some(intent) = match_static_intent(&message) {
+        return persist_and_respond(
+            &app,
+            &state,
+            &message,
+            session_id,
+            static_reply(intent).to_string(),
+            Vec::new(),
+            "static",
+        );
+    }
+
     state
         .llm
         .ensure_loaded_for_inference()
@@ -64,12 +115,15 @@ pub fn send_chat_message(
 
     let embeddings = state
         .embeddings
-        .as_ref()
-        .ok_or_else(|| "Embedding engine not available (missing ONNX/tokenizer resources)".to_string())?;
-    let store = state
-        .vector_store
-        .as_ref()
-        .ok_or_else(|| "Legal vector DB not available (resources/lexuz.db)".to_string())?;
+        .lock()
+        .clone()
+        .ok_or_else(|| {
+            "Embedding modeli hali tayyor emas. Yuklanishini kuting yoki dasturni qayta oching."
+                .to_string()
+        })?;
+    let store = state.vector_store.lock().clone().ok_or_else(|| {
+        "Huquqiy baza hali tayyor emas. Yuklanishini kuting yoki dasturni qayta oching.".to_string()
+    })?;
 
     let settings = state.settings.lock().clone();
     let rag = RagPipeline::new(embeddings.as_ref(), store.as_ref());
